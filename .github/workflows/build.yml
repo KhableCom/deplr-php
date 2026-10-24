@@ -151,16 +151,16 @@ jobs:
         run: |
           set -eu
           : > digests.txt
-          for row in $(printf '%s' "$BASES" | jq -c '.[]'); do
-            minor="$(printf '%s' "$row" | jq -r .minor)"
-            tag="$(printf '%s' "$row" | jq -r .tag)"
+          # One base per line: minor, tag and upstream digest have no spaces.
+          printf '%s' "$BASES" | jq -r '.[] | "\(.minor) \(.tag) \(.upstreamDigest)"' > bases.txt
+          while read -r minor tag upstream_digest; do
             docker buildx imagetools create --tag "$REPOSITORY:$tag" \
               "$REPOSITORY:$tag-amd64" "$REPOSITORY:$tag-arm64"
             digest="$(docker buildx imagetools inspect "$REPOSITORY:$tag" --format '{{json .Manifest}}' | jq -r .digest)"
             cosign sign --yes "$REPOSITORY@$digest"
             echo "php $minor digest $digest" >> digests.txt
-            echo "php $minor upstreamDigest $(printf '%s' "$row" | jq -r .upstreamDigest)" >> digests.txt
-          done
+            echo "php $minor upstreamDigest $upstream_digest" >> digests.txt
+          done < bases.txt
           printf '%s' "$TOOLS" | jq -r '.[] | "\(.kind) \(.key) digest \(.digest)"' >> digests.txt
           python3 scripts/record-digests.py --repository "$REPOSITORY" < digests.txt
           {
