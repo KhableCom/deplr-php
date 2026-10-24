@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "version": "2026-10-21.1",
+  "uid": 33,
+  "gid": 33,
+  "phpRepository": "ghcr.io/kongpda/deplr-php",
+  "extensionSets": [
+    {
+      "name": "laravel",
+      "install": [
+        "bcmath",
+        "exif",
+        "gd",
+        "intl"
+      ],
+      "extensions": [
+        "bcmath",
+        "ctype",
+        "curl",
+        "date",
+        "dom",
+        "exif",
+        "fileinfo",
+        "filter",
+        "gd",
+        "hash",
+        "iconv",
+        "intl",
+        "json",
+        "libxml",
+        "mbstring",
+        "mysqlnd",
+        "opcache",
+        "openssl",
+        "pcntl",
+        "pcre",
+        "pdo",
+        "pdo_mysql",
+        "pdo_pgsql",
+        "pdo_sqlite",
+        "phar",
+        "posix",
+        "random",
+        "readline",
+        "redis",
+        "reflection",
+        "session",
+        "simplexml",
+        "sodium",
+        "spl",
+        "sqlite3",
+        "standard",
+        "tokenizer",
+        "xml",
+        "xmlreader",
+        "xmlwriter",
+        "zip",
+        "zlib"
+      ]
+    }
+  ],
+  "php": [
+    {
+      "minor": "8.5",
+      "extensionSet": "laravel",
+      "upstream": "serversideup/php:8.5-fpm-trixie-v5.0.2",
+      "upstreamDigest": "sha256:9d09d987b9a167ac494371e4ba1843d8f0006f859455f5a1d1b60cd9825b3bc0",
+      "digest": null
+    },
+    {
+      "minor": "8.4",
+      "extensionSet": "laravel",
+      "upstream": "serversideup/php:8.4-fpm-trixie-v5.0.2",
+      "upstreamDigest": "sha256:4e4ec3c7488be8fef6ee63af0c87c4b064f43c0cbdc203decfceef1d26411e59",
+      "digest": null
+    },
+    {
+      "minor": "8.3",
+      "extensionSet": "laravel",
+      "upstream": "serversideup/php:8.3-fpm-trixie-v5.0.2",
+      "upstreamDigest": "sha256:f9b03a773edc09739bb9ea4a86dac278e789f3f2a558876467c575b33b19579b",
+      "digest": null
+    },
+    {
+      "minor": "8.2",
+      "extensionSet": "laravel",
+      "upstream": "serversideup/php:8.2-fpm-trixie-v5.0.2",
+      "upstreamDigest": "sha256:b6d1d5ff15e9c2c8fc12e66a281e496c57b38651711713bda971dbf0f7d0d286",
+      "digest": null
+    }
+  ],
+  "node": [
+    {
+      "major": 24,
+      "codename": "krypton",
+      "image": "node:24.22.1-trixie-slim",
+      "digest": "sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea"
+    },
+    {
+      "major": 22,
+      "codename": "jod",
+      "image": "node:22-trixie-slim",
+      "digest": null
+    }
+  ],
+  "nodeDefault": 24,
+  "bun": {
+    "image": "oven/bun:1-slim",
+    "digest": null
+  }
+}

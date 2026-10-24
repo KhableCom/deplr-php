@@ -1,0 +1,178 @@
+# Deplr PHP base images: ghcr.io/kongpda/deplr-php:<line>-fpm-<extension set>
+# for every entry of catalog.json, built natively on amd64 and arm64 runners
+# with buildx, from the upstream serversideup image pinned by digest.
+#
+# A pull request builds every image and pushes nothing. A manual run on main
+# with "push" pushes to GHCR with this run's own GITHUB_TOKEN (no stored
+# secrets), signs each multi-architecture index with cosign (keyless, tied to
+# this workflow), and prints the catalog with the new digests. A person
+# reviews that catalog and commits it to kongpda/deplr as
+# infra/build/catalog.json. This workflow never writes to any repository.
+#
+# Third-party actions are pinned by commit SHA.
+name: Build
+on:
+  workflow_dispatch:
+    inputs:
+      push:
+        description: Push and sign the images, then print the catalog with their digests
+        type: boolean
+        default: false
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  # Only a manual run on main publishes. Pull requests, forks included, never do.
+  PUSH: ${{ github.event_name == 'workflow_dispatch' && inputs.push && github.ref == 'refs/heads/main' }}
+  REPOSITORY: ghcr.io/kongpda/deplr-php
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      bases: ${{ steps.plan.outputs.bases }}
+      tools: ${{ steps.plan.outputs.tools }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      # Upstream digests the catalog does not pin yet are resolved here once,
+      # so both architectures build from the same upstream image.
+      - id: plan
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, re, subprocess
+          DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
+          catalog = json.load(open("catalog.json"))
+          sets = {s["name"]: s for s in catalog["extensionSets"]}
+          def resolve(reference):
+              out = subprocess.run(
+                  ["docker", "buildx", "imagetools", "inspect", reference, "--format", "{{json .Manifest}}"],
+                  check=True, capture_output=True, text=True).stdout
+              digest = json.loads(out)["digest"]
+              if not DIGEST.match(digest):
+                  raise SystemExit(f"{reference}: unexpected digest {digest!r}")
+              return digest
+          bases = []
+          for entry in catalog["php"]:
+              s = sets[entry["extensionSet"]]
+              upstream_digest = entry["upstreamDigest"] or resolve(entry["upstream"])
+              bases.append({
+                  "minor": entry["minor"],
+                  "set": s["name"],
+                  "tag": f'{entry["minor"]}-fpm-{s["name"]}',
+                  "upstream": f'{entry["upstream"]}@{upstream_digest}',
+                  "upstreamDigest": upstream_digest,
+                  "install": " ".join(s["install"]),
+                  "expected": " ".join(s["extensions"]),
+              })
+          tools = []
+          for entry in catalog["node"]:
+              tools.append({"kind": "node", "key": str(entry["major"]), "digest": entry["digest"] or resolve(entry["image"])})
+          tools.append({"kind": "bun", "key": "-", "digest": catalog["bun"]["digest"] or resolve(catalog["bun"]["image"])})
+          print("bases=" + json.dumps(bases))
+          print("tools=" + json.dumps(tools))
+          PY
+
+  build:
+    needs: plan
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        base: ${{ fromJSON(needs.plan.outputs.bases) }}
+        arch:
+          - { name: amd64, runner: ubuntu-24.04 }
+          - { name: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.arch.runner }}
+    timeout-minutes: 45
+    env:
+      UPSTREAM: ${{ matrix.base.upstream }}
+      EXTENSIONS: ${{ matrix.base.install }}
+      EXPECTED: ${{ matrix.base.expected }}
+      TAG: ${{ matrix.base.tag }}-${{ matrix.arch.name }}
+      PLATFORM: linux/${{ matrix.arch.name }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - run: docker buildx create --use --driver docker-container --name deplr-php
+      - name: Log in to GHCR
+        if: env.PUSH == 'true'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Build (and push one architecture)
+        run: |
+          set -eu
+          output="type=cacheonly"
+          if [ "$PUSH" = "true" ]; then
+            output="type=image,name=$REPOSITORY:$TAG,push=true,compression=zstd,force-compression=true"
+          fi
+          docker buildx build php \
+            --file php/Dockerfile \
+            --platform "$PLATFORM" \
+            --build-arg UPSTREAM="$UPSTREAM" \
+            --build-arg EXTENSIONS="$EXTENSIONS" \
+            --build-arg EXPECTED="$EXPECTED" \
+            --provenance=mode=max \
+            --sbom=true \
+            --output "$output"
+
+  publish:
+    needs: [plan, build]
+    if: github.event_name == 'workflow_dispatch' && inputs.push && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # keyless cosign signing
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      BASES: ${{ needs.plan.outputs.bases }}
+      TOOLS: ${{ needs.plan.outputs.tools }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Log in to GHCR
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      # One multi-architecture index per base, signed, then the catalog with
+      # every digest. The index digest is what projects pin.
+      - name: Create, sign and record the indexes
+        run: |
+          set -eu
+          : > digests.txt
+          for row in $(printf '%s' "$BASES" | jq -c '.[]'); do
+            minor="$(printf '%s' "$row" | jq -r .minor)"
+            tag="$(printf '%s' "$row" | jq -r .tag)"
+            docker buildx imagetools create --tag "$REPOSITORY:$tag" \
+              "$REPOSITORY:$tag-amd64" "$REPOSITORY:$tag-arm64"
+            digest="$(docker buildx imagetools inspect "$REPOSITORY:$tag" --format '{{json .Manifest}}' | jq -r .digest)"
+            cosign sign --yes "$REPOSITORY@$digest"
+            echo "php $minor digest $digest" >> digests.txt
+            echo "php $minor upstreamDigest $(printf '%s' "$row" | jq -r .upstreamDigest)" >> digests.txt
+          done
+          printf '%s' "$TOOLS" | jq -r '.[] | "\(.kind) \(.key) digest \(.digest)"' >> digests.txt
+          python3 scripts/record-digests.py --repository "$REPOSITORY" < digests.txt
+          {
+            echo '## Catalog with the new digests'
+            echo
+            echo 'Review, then commit this to kongpda/deplr as infra/build/catalog.json.'
+            echo
+            echo '```json'
+            cat catalog.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: catalog
+          path: catalog.json
