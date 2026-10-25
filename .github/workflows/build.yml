@@ -1,12 +1,13 @@
-# Deplr PHP base images: ghcr.io/kongpda/deplr-php:<line>-fpm-<extension set>
-# for every entry of catalog.json, built natively on amd64 and arm64 runners
+# Deplr PHP base images: ghcr.io/khablecom/deplr-php:<line>-fpm-<extension set>
+# for every entry of catalog.json, built natively on Blacksmith amd64 and arm64
+# runners
 # with buildx, from the upstream serversideup image pinned by digest.
 #
 # A pull request builds every image and pushes nothing. A manual run on main
 # with "push" pushes to GHCR with this run's own GITHUB_TOKEN (no stored
 # secrets), signs each multi-architecture index with cosign (keyless, tied to
 # this workflow), and prints the catalog with the new digests. A person
-# reviews that catalog and commits it to kongpda/deplr as
+# reviews that catalog and commits it to KhableCom/deplr as
 # infra/build/catalog.json. This workflow never writes to any repository.
 #
 # Third-party actions are pinned by commit SHA.
@@ -27,10 +28,10 @@ concurrency:
 env:
   # Only a manual run on main publishes. Pull requests, forks included, never do.
   PUSH: ${{ github.event_name == 'workflow_dispatch' && inputs.push && github.ref == 'refs/heads/main' }}
-  REPOSITORY: ghcr.io/kongpda/deplr-php
+  REPOSITORY: ghcr.io/khablecom/deplr-php
 jobs:
   plan:
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 10
     outputs:
       bases: ${{ steps.plan.outputs.bases }}
@@ -87,8 +88,8 @@ jobs:
       matrix:
         base: ${{ fromJSON(needs.plan.outputs.bases) }}
         arch:
-          - { name: amd64, runner: ubuntu-24.04 }
-          - { name: arm64, runner: ubuntu-24.04-arm }
+          - { name: amd64, runner: blacksmith-4vcpu-ubuntu-2404 }
+          - { name: arm64, runner: blacksmith-4vcpu-ubuntu-2404-arm }
     runs-on: ${{ matrix.arch.runner }}
     timeout-minutes: 45
     env:
@@ -131,7 +132,7 @@ jobs:
       contents: read
       packages: write
       id-token: write # keyless cosign signing
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 15
     env:
       BASES: ${{ needs.plan.outputs.bases }}
@@ -166,7 +167,7 @@ jobs:
           {
             echo '## Catalog with the new digests'
             echo
-            echo 'Review, then commit this to kongpda/deplr as infra/build/catalog.json.'
+            echo 'Review, then commit this to KhableCom/deplr as infra/build/catalog.json.'
             echo
             echo '```json'
             cat catalog.json

@@ -1,9 +1,9 @@
 # deplr-php
 
-PHP FPM base images for [Deplr](https://github.com/kongpda/deplr)'s Laravel build recipe (Deplr ADR 0095).
+PHP FPM base images for [Deplr](https://github.com/KhableCom/deplr)'s Laravel build recipe (Deplr ADR 0095).
 
 ```
-ghcr.io/kongpda/deplr-php:<line>-fpm-<extension set>    e.g. 8.5-fpm-laravel
+ghcr.io/khablecom/deplr-php:<line>-fpm-<extension set>    e.g. 8.5-fpm-laravel
 ```
 
 Each image is a pinned [serversideup/php](https://github.com/serversideup/docker-php) FPM image plus the extensions of its set, checked with `php -m`. Nothing else: no Node, no app code, no configuration. Images are multi-architecture (amd64 and arm64), carry an SBOM and provenance, and each index is signed with cosign (keyless).
@@ -24,13 +24,13 @@ Each image is a pinned [serversideup/php](https://github.com/serversideup/docker
 Verify a signature:
 
 ```sh
-cosign verify ghcr.io/kongpda/deplr-php@sha256:<digest> \
-  --certificate-identity-regexp '^https://github.com/kongpda/deplr-php/\.github/workflows/build\.yml@refs/heads/main$' \
+cosign verify ghcr.io/khablecom/deplr-php@sha256:<digest> \
+  --certificate-identity-regexp '^https://github.com/KhableCom/deplr-php/\.github/workflows/build\.yml@refs/heads/main$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
 ## Security
 
-This repository is public so its builds run on GitHub's free runners. It holds no secrets: publishing uses the run's own `GITHUB_TOKEN`. Pull requests, including from forks, only build. Never point this workflow at a self-hosted runner.
+Builds run on Blacksmith runners (a fresh VM per job, billed to the KhableCom workspace). This repository holds no secrets: publishing uses the run's own `GITHUB_TOKEN`. Pull requests, including from forks, only build. Never point this workflow at a self-hosted runner.
 
 License: AGPL-3.0-only, like Deplr.
