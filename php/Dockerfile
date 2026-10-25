@@ -42,6 +42,6 @@ RUN set -eu; \
 
 USER www-data
 LABEL org.opencontainers.image.title="deplr-php" \
-      org.opencontainers.image.source="https://github.com/kongpda/deplr-php" \
+      org.opencontainers.image.source="https://github.com/KhableCom/deplr-php" \
       org.opencontainers.image.description="Deplr PHP FPM base for the Laravel build recipe" \
       org.opencontainers.image.licenses="AGPL-3.0-only"

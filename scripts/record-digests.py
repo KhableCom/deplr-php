@@ -27,7 +27,7 @@ if len(args) >= 2 and args[0] == "--repository":
     repository = args[1]
     args = args[2:]
     if not REPOSITORY.match(repository) or len(repository) > 255:
-        sys.exit("--repository must be a lowercase registry path such as ghcr.io/kongpda/deplr-php")
+        sys.exit("--repository must be a lowercase registry path such as ghcr.io/khablecom/deplr-php")
 catalog_path = Path(args[0] if args else Path(__file__).resolve().parent.parent / "catalog.json")
 catalog = json.loads(catalog_path.read_text())
 if repository is not None:
