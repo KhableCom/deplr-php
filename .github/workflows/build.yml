@@ -1,5 +1,5 @@
 # Deplr PHP base images: ghcr.io/khablecom/deplr-php:<line>-fpm-<extension set>
-# for every entry of catalog.json, built natively on Blacksmith amd64 and arm64
+# for every entry of catalog.json, built natively on GitHub amd64 and arm64
 # runners
 # with buildx, from the upstream serversideup image pinned by digest.
 #
@@ -31,7 +31,7 @@ env:
   REPOSITORY: ghcr.io/khablecom/deplr-php
 jobs:
   plan:
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       bases: ${{ steps.plan.outputs.bases }}
@@ -88,8 +88,8 @@ jobs:
       matrix:
         base: ${{ fromJSON(needs.plan.outputs.bases) }}
         arch:
-          - { name: amd64, runner: blacksmith-4vcpu-ubuntu-2404 }
-          - { name: arm64, runner: blacksmith-4vcpu-ubuntu-2404-arm }
+          - { name: amd64, runner: ubuntu-24.04 }
+          - { name: arm64, runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.arch.runner }}
     timeout-minutes: 45
     env:
@@ -132,7 +132,7 @@ jobs:
       contents: read
       packages: write
       id-token: write # keyless cosign signing
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       BASES: ${{ needs.plan.outputs.bases }}

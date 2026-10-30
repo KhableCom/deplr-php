@@ -31,6 +31,6 @@ cosign verify ghcr.io/khablecom/deplr-php@sha256:<digest> \
 
 ## Security
 
-Builds run on Blacksmith runners (a fresh VM per job, billed to the KhableCom workspace). This repository holds no secrets: publishing uses the run's own `GITHUB_TOKEN`. Pull requests, including from forks, only build. Never point this workflow at a self-hosted runner.
+Builds run on GitHub's hosted runners (a fresh VM per job; free for this public repository). This repository holds no secrets: publishing uses the run's own `GITHUB_TOKEN`. Pull requests, including from forks, only build. Never point this workflow at a self-hosted runner.
 
 License: AGPL-3.0-only, like Deplr.
