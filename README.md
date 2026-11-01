@@ -6,7 +6,7 @@ PHP FPM base images for [Deplr](https://github.com/KhableCom/deplr)'s Laravel bu
 ghcr.io/khablecom/deplr-php:<line>-fpm-<extension set>    e.g. 8.5-fpm-laravel
 ```
 
-Each image is a pinned [serversideup/php](https://github.com/serversideup/docker-php) FPM image plus the extensions of its set, checked with `php -m`. Nothing else: no Node, no app code, no configuration. Images are multi-architecture (amd64 and arm64), carry an SBOM and provenance, and each index is signed with cosign (keyless).
+Each image is a pinned [serversideup/php](https://github.com/serversideup/docker-php) FPM image plus the extensions of its set, checked with `php -m`, and one PHP setting: session upload progress is forced off (`php/zz-deplr-security.ini`, CVE-2026-115560). Nothing else: no Node, no app code. Images are multi-architecture (amd64 and arm64), carry an SBOM and provenance, and each index is signed with cosign (keyless).
 
 ## What is here
 

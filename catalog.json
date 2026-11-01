@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": "2026-10-25.1",
+  "version": "2026-11-01.1",
   "uid": 33,
   "gid": 33,
   "phpRepository": "ghcr.io/khablecom/deplr-php",
@@ -63,29 +63,29 @@
     {
       "minor": "8.5",
       "extensionSet": "laravel",
-      "upstream": "serversideup/php:8.5-fpm-trixie-v5.0.2",
-      "upstreamDigest": "sha256:9d09d987b9a167ac494371e4ba1843d8f0006f859455f5a1d1b60cd9825b3bc0",
+      "upstream": "serversideup/php:8.5-fpm-trixie-v5.0.3",
+      "upstreamDigest": "sha256:65676b31e690fd0718ea68d92c34167e1b71c54ab67a9930eacc01af1263b70e",
       "digest": null
     },
     {
       "minor": "8.4",
       "extensionSet": "laravel",
-      "upstream": "serversideup/php:8.4-fpm-trixie-v5.0.2",
-      "upstreamDigest": "sha256:4e4ec3c7488be8fef6ee63af0c87c4b064f43c0cbdc203decfceef1d26411e59",
+      "upstream": "serversideup/php:8.4-fpm-trixie-v5.0.3",
+      "upstreamDigest": "sha256:e6891ddcbb160413e817bd853a339a0ef1e627de4b50c5108e3520cb19e57ea9",
       "digest": null
     },
     {
       "minor": "8.3",
       "extensionSet": "laravel",
-      "upstream": "serversideup/php:8.3-fpm-trixie-v5.0.2",
-      "upstreamDigest": "sha256:f9b03a773edc09739bb9ea4a86dac278e789f3f2a558876467c575b33b19579b",
+      "upstream": "serversideup/php:8.3-fpm-trixie-v5.0.3",
+      "upstreamDigest": "sha256:c9c6738a57398365cf58fc0a0d76cf9d00f3415539023fe1a920f57627b51b03",
       "digest": null
     },
     {
       "minor": "8.2",
       "extensionSet": "laravel",
-      "upstream": "serversideup/php:8.2-fpm-trixie-v5.0.2",
-      "upstreamDigest": "sha256:b6d1d5ff15e9c2c8fc12e66a281e496c57b38651711713bda971dbf0f7d0d286",
+      "upstream": "serversideup/php:8.2-fpm-trixie-v5.0.3",
+      "upstreamDigest": "sha256:da8518c14e41a5461a61f043abf665e3799cea2998f01264b5ab865ffdc492a1",
       "digest": null
     }
   ],
