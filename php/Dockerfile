@@ -7,15 +7,16 @@
 # and passes them as build arguments:
 #
 #   docker buildx build php \
-#     --build-arg UPSTREAM=serversideup/php:8.4-fpm-trixie-v5.0.2@sha256:<digest> \
+#     --build-arg UPSTREAM=serversideup/php:8.4-fpm-trixie-v5.0.3@sha256:<digest> \
 #     --build-arg EXTENSIONS="bcmath exif gd intl" \
 #     --build-arg EXPECTED="<every extension of the set>"
 #
 # Project builds never compile PHP or extensions: they start FROM this image.
-# It adds nothing else: no Node, no application code, no configuration.
+# It adds one PHP setting (below) and nothing else: no Node, no application
+# code.
 
 # The default is the PHP 8.5 entry of the catalog; CI always passes it.
-ARG UPSTREAM=serversideup/php:8.5-fpm-trixie-v5.0.2@sha256:9d09d987b9a167ac494371e4ba1843d8f0006f859455f5a1d1b60cd9825b3bc0
+ARG UPSTREAM=serversideup/php:8.5-fpm-trixie-v5.0.3@sha256:65676b31e690fd0718ea68d92c34167e1b71c54ab67a9930eacc01af1263b70e
 FROM ${UPSTREAM}
 
 ARG EXTENSIONS
@@ -39,6 +40,19 @@ RUN set -eu; \
     if [ -n "$missing" ]; then echo "extensions not loaded:$missing" >&2; exit 1; fi; \
     install -d -o www-data -g www-data /app; \
     chown www-data:www-data /var/www/html
+
+# Session upload progress stays off whatever the environment says
+# (CVE-2026-115560, and the known abuse of CVE-2026-109618/109619). The
+# upstream image turns it off through PHP_SESSION_UPLOAD_PROGRESS_ENABLED,
+# which an app's environment could set back; this file loads after it. It
+# must be in php.ini, not ini_set() or .user.ini: PHP reads it before the
+# request body. The build fails if it is not in force.
+COPY --chmod=0644 zz-deplr-security.ini /usr/local/etc/php/conf.d/zz-deplr-security.ini
+RUN set -eu; \
+    value="$(PHP_SESSION_UPLOAD_PROGRESS_ENABLED=1 php -r 'echo var_export(ini_get("session.upload_progress.enabled"), true);')"; \
+    if [ "$value" != "''" ] && [ "$value" != "'0'" ]; then \
+      echo "session.upload_progress.enabled is $value, expected off" >&2; exit 1; \
+    fi
 
 USER www-data
 LABEL org.opencontainers.image.title="deplr-php" \
